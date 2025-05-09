@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pharmacy Cross Animations</title>
+  <style>
+    body {
+      background-color: black;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(10, 20px);
+      grid-template-rows: repeat(10, 20px);
+      gap: 6px;
+    }
+
+    .led {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background-color: #003300;
+      transition: background-color 0.2s;
+      visibility: visible;
+    }
+
+    .on {
+      background-color: #00ff00;
+    }
+
+    .hidden {
+      visibility: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div class="grid" id="ledGrid"></div>
+
+  <script>
+    const size = 10;
+    const grid = document.getElementById("ledGrid");
+    const leds = [];
+    const hiddenPositions = new Set();
+
+    // Define 3x3 hidden corners
+    for (let row = 0; row < 3; row++) {
+      for (let col = 0; col < 3; col++) {
+        hiddenPositions.add(`${row},${col}`);
+        hiddenPositions.add(`${row},${size - 1 - col}`);
+        hiddenPositions.add(`${size - 1 - row},${col}`);
+        hiddenPositions.add(`${size - 1 - row},${size - 1 - col}`);
+      }
+    }
+
+    // Build grid
+    for (let row = 0; row < size; row++) {
+      leds[row] = [];
+      for (let col = 0; col < size; col++) {
+        const led = document.createElement("div");
+        led.classList.add("led");
+        if (hiddenPositions.has(`${row},${col}`)) {
+          led.classList.add("hidden");
+        }
+        grid.appendChild(led);
+        leds[row][col] = led;
+      }
+    }
+
+    function clearCross() {
+      for (let row = 0; row < size; row++) {
+        for (let col = 0; col < size; col++) {
+          if (!hiddenPositions.has(`${row},${col}`)) {
+            leds[row][col].classList.remove("on");
+          }
+        }
+      }
+    }
+
+    function lightRow(row) {
+      for (let col = 0; col < size; col++) {
+        if (!hiddenPositions.has(`${row},${col}`)) {
+          leds[row][col].classList.add("on");
+        }
+      }
+    }
+
+    function lightColumn(col) {
+      for (let row = 0; row < size; row++) {
+        if (!hiddenPositions.has(`${row},${col}`)) {
+          leds[row][col].classList.add("on");
+        }
+      }
+    }
+
+    async function animateRows() {
+      for (let row = 0; row < size; row++) {
+        lightRow(row);
+        await new Promise(res => setTimeout(res, 100));
+      }
+    }
+
+    async function animateColumns() {
+      for (let col = 0; col < size; col++) {
+        lightColumn(col);
+        await new Promise(res => setTimeout(res, 100));
+      }
+    }
+
+    async function animateSpiral() {
+      let top = 0, bottom = size - 1;
+      let left = 0, right = size - 1;
+
+      while (top <= bottom && left <= right) {
+        // Top row
+        for (let col = left; col <= right; col++) {
+          if (!hiddenPositions.has(`${top},${col}`)) {
+            leds[top][col].classList.add("on");
+            await new Promise(res => setTimeout(res, 50));
+          }
+        }
+        top++;
+
+        // Right column
+        for (let row = top; row <= bottom; row++) {
+          if (!hiddenPositions.has(`${row},${right}`)) {
+            leds[row][right].classList.add("on");
+            await new Promise(res => setTimeout(res, 50));
+          }
+        }
+        right--;
+
+        // Bottom row
+        for (let col = right; col >= left; col--) {
+          if (!hiddenPositions.has(`${bottom},${col}`)) {
+            leds[bottom][col].classList.add("on");
+            await new Promise(res => setTimeout(res, 50));
+          }
+        }
+        bottom--;
+
+        // Left column
+        for (let row = bottom; row >= top; row--) {
+          if (!hiddenPositions.has(`${row},${left}`)) {
+            leds[row][left].classList.add("on");
+            await new Promise(res => setTimeout(res, 50));
+          }
+        }
+        left++;
+      }
+    }
+
+    async function animateCrossLoop() {
+      while (true) {
+        clearCross();
+        await animateRows();
+        await new Promise(res => setTimeout(res, 2000));
+
+        clearCross();
+        await animateColumns();
+        await new Promise(res => setTimeout(res, 2000));
+
+        clearCross();
+        await animateSpiral();
+        await new Promise(res => setTimeout(res, 2000));
+      }
+    }
+
+    animateCrossLoop();
+  </script>
+</body>
+</html>
